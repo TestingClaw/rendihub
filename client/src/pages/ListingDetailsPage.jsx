@@ -1,6 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
 import dayjs from 'dayjs';
 import { useParams } from 'react-router-dom';
 import http from '../api/http';
@@ -10,46 +8,83 @@ export default function ListingDetailsPage() {
   const { id } = useParams();
   const { user } = useAuth();
   const [data, setData] = useState(null);
-  const [range, setRange] = useState([new Date(), dayjs().add(2, 'day').toDate()]);
-  const [pricingUnit, setPricingUnit] = useState('day');
-  const [message, setMessage] = useState('');
-  const [review, setReview] = useState({ bookingId: '', rating: 5, comment: '' });
+  const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
+  const [freeSlots, setFreeSlots] = useState([]);
+  const [selectedTime, setSelectedTime] = useState('');
+  const [returnDate, setReturnDate] = useState(dayjs().add(1, 'day').format('YYYY-MM-DD'));
+  const [guest, setGuest] = useState({ name: '', email: '', phone: '' });
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+  const [review, setReview] = useState({ bookingId: '', rating: 5, comment: '' });
 
   const load = async () => {
     const response = await http.get(`/listings/${id}`);
     setData(response.data);
   };
 
-  useEffect(() => {
-    load();
-  }, [id]);
+  const loadSlots = async (date) => {
+    try {
+      const { data: slots } = await http.get('/external-booking/free-times', {
+        params: { service_id: 1, date }
+      });
+      setFreeSlots(slots);
+      setSelectedTime('');
+    } catch {
+      setFreeSlots([]);
+    }
+  };
+
+  useEffect(() => { load(); }, [id]);
+  useEffect(() => { loadSlots(selectedDate); }, [selectedDate]);
+
+  const days = useMemo(() => {
+    const d1 = dayjs(selectedDate);
+    const d2 = dayjs(returnDate);
+    const diff = d2.diff(d1, 'day');
+    return diff > 0 ? diff : 1;
+  }, [selectedDate, returnDate]);
 
   const estimatedPrice = useMemo(() => {
     if (!data) return 0;
-    const [start, end] = range;
-    const days = dayjs(end).diff(dayjs(start), 'day') + 1;
-    if (days <= 0) return 0;
-    if (pricingUnit === 'day') return days * data.listing.pricing.day;
-    if (pricingUnit === 'week') return Math.ceil(days / 7) * data.listing.pricing.week;
-    return Math.ceil(days / 30) * data.listing.pricing.month;
-  }, [data, range, pricingUnit]);
+    return days * data.listing.pricing.day;
+  }, [data, days]);
 
   const handleBooking = async () => {
+    if (!guest.name || !guest.email || !guest.phone) {
+      setError('Palun täida kõik väljad');
+      return;
+    }
+    if (!selectedTime) {
+      setError('Palun vali kellaaeg');
+      return;
+    }
+    setLoading(true);
+    setNotice('');
+    setError('');
     try {
-      setNotice('');
-      setError('');
-      await http.post('/bookings', {
-        listingId: Number(id),
-        startDate: dayjs(range[0]).format('YYYY-MM-DD'),
-        endDate: dayjs(range[1]).format('YYYY-MM-DD'),
-        pricingUnit
+      const { data: result } = await http.post('/external-booking/book', {
+        service_id: 1,
+        date: selectedDate,
+        time: selectedTime,
+        return_datetime: `${returnDate} ${selectedTime}`,
+        name: guest.name,
+        email: guest.email,
+        phone: guest.phone
       });
-      setNotice('Booking request sent');
-      await load();
-    } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Booking failed');
+      if (result.error) {
+        setError(result.error);
+      } else {
+        setNotice('Broneering loodud! Kinnitus saadetakse emailile.');
+        setGuest({ name: '', email: '', phone: '' });
+        setSelectedTime('');
+        loadSlots(selectedDate);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Broneerimine ebaõnnestus');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,9 +94,9 @@ export default function ListingDetailsPage() {
       setError('');
       await http.post('/messages', { listingId: Number(id), body: message });
       setMessage('');
-      setNotice('Message sent');
-    } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Message failed');
+      setNotice('Sõnum saadetud');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Sõnumi saatmine ebaõnnestus');
     }
   };
 
@@ -72,18 +107,18 @@ export default function ListingDetailsPage() {
       setError('');
       await http.post('/reviews', { ...review, bookingId: Number(review.bookingId) });
       setReview({ bookingId: '', rating: 5, comment: '' });
-      setNotice('Review submitted');
+      setNotice('Arvustus lisatud');
       await load();
-    } catch (requestError) {
-      setError(requestError.response?.data?.message || 'Review failed');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Arvustuse lisamine ebaõnnestus');
     }
   };
 
   if (!data) {
-    return <div className="py-20 text-center text-slate-400">Loading listing...</div>;
+    return <div className="py-20 text-center text-slate-400">Laadin...</div>;
   }
 
-  const { listing, bookings, reviews } = data;
+  const { listing, reviews } = data;
   const hero = listing.images?.[0] || 'https://placehold.co/1200x700/0f172a/38bdf8?text=RendiHub';
 
   return (
@@ -95,34 +130,18 @@ export default function ListingDetailsPage() {
             <div>
               <p className="mb-2 text-sm uppercase tracking-[0.25em] text-cyan-300">{listing.categoryName}</p>
               <h1 className="text-4xl font-bold text-white">{listing.title}</h1>
-              <p className="mt-3 text-slate-400">{listing.location} · Hosted by {listing.owner.fullName}</p>
+              <p className="mt-3 text-slate-400">{listing.location} &middot; {listing.owner.fullName}</p>
             </div>
             <div className="rounded-2xl bg-slate-950 px-4 py-3 text-right">
-              <p className="text-sm text-slate-400">Rating</p>
-              <p className="text-2xl font-bold text-amber-300">{listing.rating ? listing.rating.toFixed(1) : 'New'}</p>
+              <p className="text-sm text-slate-400">Hinnang</p>
+              <p className="text-2xl font-bold text-amber-300">{listing.rating ? listing.rating.toFixed(1) : 'Uus'}</p>
             </div>
           </div>
           <p className="text-slate-300">{listing.description}</p>
         </div>
 
         <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
-          <h2 className="mb-4 text-2xl font-semibold text-white">Availability calendar</h2>
-          <div className="overflow-auto rounded-3xl bg-white p-4 text-slate-900">
-            <Calendar selectRange onChange={setRange} value={range} />
-          </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            {bookings.map((booking) => (
-              <div key={booking.id} className="rounded-2xl border border-white/10 bg-slate-950 p-4">
-                <p className="text-sm font-semibold text-white">{booking.start_date} → {booking.end_date}</p>
-                <p className="mt-1 text-xs uppercase tracking-wide text-slate-400">{booking.status}</p>
-              </div>
-            ))}
-            {!bookings.length && <p className="text-sm text-slate-400">No bookings yet.</p>}
-          </div>
-        </div>
-
-        <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
-          <h2 className="mb-4 text-2xl font-semibold text-white">Reviews</h2>
+          <h2 className="mb-4 text-2xl font-semibold text-white">Arvustused</h2>
           <div className="space-y-4">
             {reviews.map((item) => (
               <div key={item.id} className="rounded-2xl border border-white/10 bg-slate-950 p-4">
@@ -133,53 +152,79 @@ export default function ListingDetailsPage() {
                 <p className="mt-2 text-sm text-slate-300">{item.comment}</p>
               </div>
             ))}
-            {!reviews.length && <p className="text-sm text-slate-400">No reviews yet.</p>}
+            {!reviews.length && <p className="text-sm text-slate-400">Arvustusi pole veel.</p>}
           </div>
-
-          {user && (
-            <form className="mt-6 grid gap-3" onSubmit={handleReview}>
-              <input placeholder="Booking ID" value={review.bookingId} onChange={(e) => setReview({ ...review, bookingId: e.target.value })} />
-              <select value={review.rating} onChange={(e) => setReview({ ...review, rating: Number(e.target.value) })}>
-                {[5, 4, 3, 2, 1].map((rating) => <option key={rating} value={rating}>{rating} stars</option>)}
-              </select>
-              <textarea rows="3" placeholder="Review comment" value={review.comment} onChange={(e) => setReview({ ...review, comment: e.target.value })} />
-              <button className="rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-semibold text-slate-950">Submit review</button>
-            </form>
-          )}
         </div>
       </div>
 
       <aside className="space-y-6">
         <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
-          <h2 className="mb-5 text-2xl font-semibold text-white">Pricing</h2>
-          <div className="space-y-3 text-sm text-slate-300">
-            <div className="flex justify-between"><span>Per day</span><strong className="text-white">€{listing.pricing.day}</strong></div>
-            <div className="flex justify-between"><span>Per week</span><strong className="text-white">€{listing.pricing.week}</strong></div>
-            <div className="flex justify-between"><span>Per month</span><strong className="text-white">€{listing.pricing.month}</strong></div>
+          <h2 className="mb-5 text-2xl font-semibold text-white">Broneeri</h2>
+
+          <div className="text-center mb-6">
+            <p className="text-4xl font-bold text-cyan-400">&euro;{listing.pricing.day}</p>
+            <p className="text-sm text-slate-400">päevas</p>
           </div>
-          {user && user.id !== listing.owner.id && (
-            <div className="mt-6 space-y-4">
-              <select value={pricingUnit} onChange={(e) => setPricingUnit(e.target.value)}>
-                <option value="day">Day pricing</option>
-                <option value="week">Week pricing</option>
-                <option value="month">Month pricing</option>
-              </select>
-              <div className="rounded-2xl bg-slate-950 p-4">
-                <p className="text-sm text-slate-400">Estimated total</p>
-                <p className="text-3xl font-bold text-cyan-400">€{estimatedPrice}</p>
-              </div>
-              <button onClick={handleBooking} className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-semibold text-slate-950">Request booking</button>
+
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm text-slate-400">Alguskuupäev</label>
+              <input type="date" value={selectedDate} min={dayjs().format('YYYY-MM-DD')}
+                onChange={(e) => setSelectedDate(e.target.value)} />
             </div>
-          )}
+
+            <div>
+              <label className="mb-1 block text-sm text-slate-400">Tagastuskuupäev</label>
+              <input type="date" value={returnDate} min={dayjs(selectedDate).add(1, 'day').format('YYYY-MM-DD')}
+                onChange={(e) => setReturnDate(e.target.value)} />
+            </div>
+
+            {freeSlots.length > 0 && (
+              <div>
+                <label className="mb-2 block text-sm text-slate-400">Vali kellaaeg</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {freeSlots.map((slot) => (
+                    <button key={slot} onClick={() => setSelectedTime(slot)}
+                      className={`rounded-xl py-2 text-sm font-medium transition ${selectedTime === slot ? 'bg-cyan-400 text-slate-950' : 'border border-white/10 text-slate-300 hover:border-cyan-400/40'}`}>
+                      {slot}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {freeSlots.length === 0 && (
+              <p className="text-sm text-slate-400">Vabu aegu sellel kuupäeval pole.</p>
+            )}
+
+            <div className="rounded-2xl bg-slate-950 p-4">
+              <div className="flex justify-between text-sm text-slate-400">
+                <span>{days} päeva × &euro;{listing.pricing.day}</span>
+                <span className="text-xl font-bold text-cyan-400">&euro;{estimatedPrice}</span>
+              </div>
+            </div>
+
+            <input placeholder="Nimi *" value={guest.name}
+              onChange={(e) => setGuest({ ...guest, name: e.target.value })} />
+            <input placeholder="Email *" type="email" value={guest.email}
+              onChange={(e) => setGuest({ ...guest, email: e.target.value })} />
+            <input placeholder="Telefon *" type="tel" value={guest.phone}
+              onChange={(e) => setGuest({ ...guest, phone: e.target.value })} />
+
+            <button onClick={handleBooking} disabled={loading}
+              className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-semibold text-slate-950 disabled:opacity-50">
+              {loading ? 'Broneerin...' : 'Broneeri'}
+            </button>
+          </div>
+
           {notice && <p className="mt-4 text-sm text-emerald-400">{notice}</p>}
           {error && <p className="mt-4 text-sm text-rose-400">{error}</p>}
         </div>
 
         {user && user.id !== listing.owner.id && (
           <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
-            <h2 className="mb-4 text-2xl font-semibold text-white">Message owner</h2>
-            <textarea rows="5" placeholder="Ask about availability, pickup, deposit..." value={message} onChange={(e) => setMessage(e.target.value)} />
-            <button onClick={handleMessage} className="mt-4 w-full rounded-2xl border border-cyan-400/40 px-4 py-3 font-semibold text-cyan-300 hover:bg-cyan-400/10">Send message</button>
+            <h2 className="mb-4 text-2xl font-semibold text-white">Kirjuta omanikule</h2>
+            <textarea rows="5" placeholder="Küsi saadavuse, üleandmise, tagatise kohta..." value={message} onChange={(e) => setMessage(e.target.value)} />
+            <button onClick={handleMessage} className="mt-4 w-full rounded-2xl border border-cyan-400/40 px-4 py-3 font-semibold text-cyan-300 hover:bg-cyan-400/10">Saada sõnum</button>
           </div>
         )}
       </aside>

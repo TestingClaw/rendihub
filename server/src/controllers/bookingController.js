@@ -9,16 +9,12 @@ export const createBooking = asyncHandler(async (req, res) => {
     return res.status(422).json({ errors: errors.array() });
   }
 
-  const { listingId, startDate, endDate, pricingUnit } = req.body;
+  const { listingId, startDate, endDate, name, email, phone } = req.body;
   const [listings] = await pool.query('SELECT * FROM listings WHERE id = ?', [listingId]);
   const listing = listings[0];
 
   if (!listing) {
     return res.status(404).json({ message: 'Listing not found' });
-  }
-
-  if (listing.user_id === req.user.id) {
-    return res.status(400).json({ message: 'You cannot book your own listing' });
   }
 
   const [conflicts] = await pool.query(
@@ -30,29 +26,28 @@ export const createBooking = asyncHandler(async (req, res) => {
   );
 
   if (conflicts.length) {
-    return res.status(409).json({ message: 'Selected dates are already booked' });
+    return res.status(409).json({ message: 'Valitud kuupäevad on juba broneeritud' });
   }
 
-  const totalPrice = calculateBookingPrice({ startDate, endDate, pricingUnit, listing });
+  const totalPrice = calculateBookingPrice({ startDate, endDate, listing });
   const [result] = await pool.query(
-    `INSERT INTO bookings (listing_id, renter_id, owner_id, start_date, end_date, pricing_unit, total_price)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    [listingId, req.user.id, listing.user_id, startDate, endDate, pricingUnit, totalPrice]
+    `INSERT INTO bookings (listing_id, owner_id, start_date, end_date, pricing_unit, total_price, guest_name, guest_email, guest_phone)
+     VALUES (?, ?, ?, ?, 'day', ?, ?, ?, ?)`,
+    [listingId, listing.user_id, startDate, endDate, totalPrice, name, email, phone]
   );
 
-  res.status(201).json({ message: 'Booking request created', bookingId: result.insertId, totalPrice });
+  res.status(201).json({ message: 'Broneering loodud!', bookingId: result.insertId, totalPrice });
 });
 
 export const getMyBookings = asyncHandler(async (req, res) => {
   const [rows] = await pool.query(
-    `SELECT b.*, l.title, l.location, li.image_url
+    `SELECT b.*, l.title, l.location,
+       (SELECT image_url FROM listing_images WHERE listing_id = l.id LIMIT 1) AS image_url
      FROM bookings b
      JOIN listings l ON l.id = b.listing_id
-     LEFT JOIN listing_images li ON li.listing_id = l.id
-     WHERE b.renter_id = ? OR b.owner_id = ?
-     GROUP BY b.id
+     WHERE b.owner_id = ?
      ORDER BY b.created_at DESC`,
-    [req.user.id, req.user.id]
+    [req.user.id]
   );
 
   res.json({ bookings: rows });

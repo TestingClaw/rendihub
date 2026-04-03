@@ -26,36 +26,38 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <section>
-        <h1 className="mb-4 text-3xl font-bold text-white">Dashboard</h1>
+        <h1 className="mb-4 text-3xl font-bold text-white">Halduspaneel</h1>
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><p className="text-slate-400">Marketplace items</p><p className="mt-2 text-3xl font-bold text-white">{listings.length}</p></div>
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><p className="text-slate-400">My bookings</p><p className="mt-2 text-3xl font-bold text-white">{bookings.length}</p></div>
-          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><p className="text-slate-400">Pending approvals</p><p className="mt-2 text-3xl font-bold text-white">{bookings.filter((booking) => booking.status === 'pending').length}</p></div>
+          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><p className="text-slate-400">Minu kuulutused</p><p className="mt-2 text-3xl font-bold text-white">{listings.length}</p></div>
+          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><p className="text-slate-400">Broneeringud</p><p className="mt-2 text-3xl font-bold text-white">{bookings.length}</p></div>
+          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><p className="text-slate-400">Ootavad kinnitust</p><p className="mt-2 text-3xl font-bold text-white">{bookings.filter((b) => b.status === 'pending').length}</p></div>
         </div>
       </section>
 
       <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-        <h2 className="mb-4 text-xl font-semibold text-white">Bookings</h2>
+        <h2 className="mb-4 text-xl font-semibold text-white">Broneeringud</h2>
         <div className="space-y-4">
           {bookings.map((booking) => (
             <div key={booking.id} className="rounded-2xl border border-white/10 bg-slate-950 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold text-white">{booking.title}</p>
-                  <p className="text-sm text-slate-400">{booking.start_date} → {booking.end_date} · {booking.pricing_unit} · €{booking.total_price}</p>
+                  <p className="text-sm text-slate-400">{booking.start_date} → {booking.end_date} · &euro;{booking.total_price}</p>
+                  {booking.guest_name && <p className="text-sm text-slate-300">{booking.guest_name} · {booking.guest_email} · {booking.guest_phone}</p>}
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="rounded-full border border-slate-700 px-3 py-1 text-xs uppercase tracking-wide text-slate-300">{booking.status}</span>
+                  <span className={`rounded-full border px-3 py-1 text-xs uppercase tracking-wide ${booking.status === 'confirmed' ? 'border-emerald-500/30 text-emerald-400' : booking.status === 'cancelled' ? 'border-rose-500/30 text-rose-400' : 'border-slate-700 text-slate-300'}`}>{booking.status === 'pending' ? 'Ootab' : booking.status === 'confirmed' ? 'Kinnitatud' : 'T&uuml;histatud'}</span>
                   {booking.status === 'pending' && (
                     <>
-                      <button onClick={() => updateStatus(booking.id, 'confirmed')} className="rounded-xl bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-950">Confirm</button>
-                      <button onClick={() => updateStatus(booking.id, 'cancelled')} className="rounded-xl bg-rose-500 px-3 py-2 text-sm font-semibold text-white">Decline</button>
+                      <button onClick={() => updateStatus(booking.id, 'confirmed')} className="rounded-xl bg-emerald-500 px-3 py-2 text-sm font-semibold text-slate-950">Kinnita</button>
+                      <button onClick={() => updateStatus(booking.id, 'cancelled')} className="rounded-xl bg-rose-500 px-3 py-2 text-sm font-semibold text-white">Keeldu</button>
                     </>
                   )}
                 </div>
               </div>
             </div>
           ))}
+          {!bookings.length && <p className="text-sm text-slate-400">Broneeringuid pole veel.</p>}
         </div>
       </section>
     </div>

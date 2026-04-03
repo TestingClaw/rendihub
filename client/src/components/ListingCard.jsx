@@ -20,13 +20,13 @@ export default function ListingCard({ listing }) {
             <p className="text-sm text-slate-400">{listing.location}</p>
           </div>
           <div className="rounded-full bg-amber-400/10 px-3 py-1 text-right text-sm text-amber-300">
-            {listing.rating ? `★ ${listing.rating.toFixed(1)}` : 'New'}
+            {listing.rating ? `★ ${listing.rating.toFixed(1)}` : 'Uus'}
           </div>
         </div>
         <p className="line-clamp-2 text-sm text-slate-300">{listing.description}</p>
         <div className="flex items-center justify-between text-sm">
-          <span className="text-slate-400">by {listing.owner.fullName}</span>
-          <span className="font-semibold text-cyan-300">€{listing.pricing.day}/day</span>
+          <span className="text-slate-400">{listing.owner.fullName}</span>
+          <span className="font-semibold text-cyan-300">&euro;{listing.pricing.day}/p&auml;ev</span>
         </div>
       </div>
     </Link>

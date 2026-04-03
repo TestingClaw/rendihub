@@ -14,14 +14,14 @@ export default function Navbar() {
           <BrandLogo />
         </Link>
         <nav className="flex items-center gap-3 md:gap-5">
-          <NavLink to="/" className={navBase}>Marketplace</NavLink>
-          {user && <NavLink to="/create-listing" className={navBase}>List item</NavLink>}
-          {user && <NavLink to="/dashboard" className={navBase}>Dashboard</NavLink>}
-          {user && <NavLink to="/messages" className={navBase}>Messages</NavLink>}
+          <NavLink to="/" className={navBase}>Kuulutused</NavLink>
+          {user && <NavLink to="/create-listing" className={navBase}>Lisa kuulutus</NavLink>}
+          {user && <NavLink to="/dashboard" className={navBase}>Halduspaneel</NavLink>}
+          {user && <NavLink to="/messages" className={navBase}>S&otilde;numid</NavLink>}
           {!user ? (
-            <NavLink to="/auth" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20">Sign in</NavLink>
+            <NavLink to="/auth" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20">Logi sisse</NavLink>
           ) : (
-            <button onClick={logout} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300 hover:border-white/20 hover:text-white">Logout</button>
+            <button onClick={logout} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300 hover:border-white/20 hover:text-white">Logi v&auml;lja</button>
           )}
         </nav>
       </div>

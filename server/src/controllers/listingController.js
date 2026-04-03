@@ -36,7 +36,9 @@ export const createListing = asyncHandler(async (req, res) => {
     return res.status(422).json({ errors: errors.array() });
   }
 
-  const { categoryId, title, description, location, priceDay, priceWeek, priceMonth } = req.body;
+  const { categoryId, title, description, location, priceDay } = req.body;
+  const priceWeek = Number(priceDay) * 7;
+  const priceMonth = Number(priceDay) * 30;
   const connection = await pool.getConnection();
 
   try {
@@ -128,7 +130,7 @@ export const getListingById = asyncHandler(async (req, res) => {
   }
 
   const [bookings] = await pool.query(
-    'SELECT id, start_date, end_date, status, pricing_unit, total_price FROM bookings WHERE listing_id = ? ORDER BY start_date ASC',
+    "SELECT id, start_date, end_date, status FROM bookings WHERE listing_id = ? AND status = 'confirmed' ORDER BY start_date ASC",
     [req.params.id]
   );
 
