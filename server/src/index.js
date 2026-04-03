@@ -28,6 +28,11 @@ app.use('/api/messages', messageRoutes);
 
 app.use((error, _req, res, _next) => {
   console.error(error);
+
+  if (error.code === 'ECONNREFUSED' || error.code === 'ER_ACCESS_DENIED_ERROR' || error.code === 'ER_BAD_DB_ERROR') {
+    return res.status(503).json({ message: 'Database unavailable', detail: error.code });
+  }
+
   res.status(500).json({ message: 'Internal server error' });
 });
 

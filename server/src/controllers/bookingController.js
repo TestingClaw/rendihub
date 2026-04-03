@@ -1,8 +1,9 @@
 import { validationResult } from 'express-validator';
 import { pool } from '../config/db.js';
 import { calculateBookingPrice } from '../utils/pricing.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-export const createBooking = async (req, res) => {
+export const createBooking = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
@@ -40,9 +41,9 @@ export const createBooking = async (req, res) => {
   );
 
   res.status(201).json({ message: 'Booking request created', bookingId: result.insertId, totalPrice });
-};
+});
 
-export const getMyBookings = async (req, res) => {
+export const getMyBookings = asyncHandler(async (req, res) => {
   const [rows] = await pool.query(
     `SELECT b.*, l.title, l.location, li.image_url
      FROM bookings b
@@ -55,9 +56,9 @@ export const getMyBookings = async (req, res) => {
   );
 
   res.json({ bookings: rows });
-};
+});
 
-export const updateBookingStatus = async (req, res) => {
+export const updateBookingStatus = asyncHandler(async (req, res) => {
   const { status } = req.body;
   const [rows] = await pool.query('SELECT * FROM bookings WHERE id = ?', [req.params.id]);
   const booking = rows[0];
@@ -72,4 +73,4 @@ export const updateBookingStatus = async (req, res) => {
 
   await pool.query('UPDATE bookings SET status = ? WHERE id = ?', [status, req.params.id]);
   res.json({ message: 'Booking updated' });
-};
+});

@@ -30,7 +30,7 @@ export default function CreateListingPage() {
   };
 
   return (
-    <div className="mx-auto max-w-3xl rounded-3xl border border-slate-800 bg-slate-900 p-8">
+    <div className="mx-auto max-w-3xl rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
       <h1 className="mb-6 text-3xl font-bold text-white">Create listing</h1>
       <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
         <select value={form.categoryId} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
@@ -44,7 +44,7 @@ export default function CreateListingPage() {
         <input type="number" step="0.01" placeholder="Price / week" value={form.priceWeek} onChange={(e) => setForm({ ...form, priceWeek: e.target.value })} />
         <input type="number" step="0.01" placeholder="Price / month" value={form.priceMonth} onChange={(e) => setForm({ ...form, priceMonth: e.target.value })} />
         <input type="file" multiple accept="image/*" className="md:col-span-2" onChange={(e) => setFiles(e.target.files)} />
-        <button className="md:col-span-2 rounded-2xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950">Publish listing</button>
+        <button className="md:col-span-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-semibold text-slate-950">Publish listing</button>
       </form>
     </div>
   );

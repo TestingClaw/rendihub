@@ -1,7 +1,8 @@
 import { validationResult } from 'express-validator';
 import { pool } from '../config/db.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-export const getConversations = async (req, res) => {
+export const getConversations = asyncHandler(async (req, res) => {
   const [rows] = await pool.query(
     `SELECT c.*, l.title,
             owner.full_name AS owner_name,
@@ -20,9 +21,9 @@ export const getConversations = async (req, res) => {
   );
 
   res.json({ conversations: rows });
-};
+});
 
-export const getMessages = async (req, res) => {
+export const getMessages = asyncHandler(async (req, res) => {
   const [conversations] = await pool.query('SELECT * FROM conversations WHERE id = ?', [req.params.id]);
   const conversation = conversations[0];
 
@@ -40,9 +41,9 @@ export const getMessages = async (req, res) => {
   );
 
   res.json({ messages, conversation });
-};
+});
 
-export const sendMessage = async (req, res) => {
+export const sendMessage = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
@@ -79,4 +80,4 @@ export const sendMessage = async (req, res) => {
   );
 
   res.status(201).json({ message: 'Message sent', conversationId });
-};
+});

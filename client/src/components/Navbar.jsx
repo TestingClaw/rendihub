@@ -1,22 +1,27 @@
 import { Link, NavLink } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import BrandLogo from './BrandLogo';
+
+const navBase = 'text-sm text-slate-300 transition hover:text-white';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
 
   return (
-    <header className="border-b border-slate-800 bg-slate-950/90 backdrop-blur">
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-        <Link to="/" className="text-2xl font-bold text-cyan-400">RendiHub</Link>
-        <nav className="flex items-center gap-5 text-sm text-slate-300">
-          <NavLink to="/">Marketplace</NavLink>
-          {user && <NavLink to="/create-listing">New listing</NavLink>}
-          {user && <NavLink to="/dashboard">Dashboard</NavLink>}
-          {user && <NavLink to="/messages">Messages</NavLink>}
+        <Link to="/" className="flex items-center">
+          <BrandLogo />
+        </Link>
+        <nav className="flex items-center gap-3 md:gap-5">
+          <NavLink to="/" className={navBase}>Marketplace</NavLink>
+          {user && <NavLink to="/create-listing" className={navBase}>List item</NavLink>}
+          {user && <NavLink to="/dashboard" className={navBase}>Dashboard</NavLink>}
+          {user && <NavLink to="/messages" className={navBase}>Messages</NavLink>}
           {!user ? (
-            <NavLink to="/auth" className="rounded-xl bg-cyan-500 px-4 py-2 font-medium text-slate-950">Sign in</NavLink>
+            <NavLink to="/auth" className="rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-500/20">Sign in</NavLink>
           ) : (
-            <button onClick={logout} className="rounded-xl border border-slate-700 px-4 py-2">Logout</button>
+            <button onClick={logout} className="rounded-full border border-white/10 px-4 py-2 text-sm text-slate-300 hover:border-white/20 hover:text-white">Logout</button>
           )}
         </nav>
       </div>

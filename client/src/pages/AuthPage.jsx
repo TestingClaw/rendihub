@@ -30,13 +30,13 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="mx-auto max-w-lg rounded-3xl border border-slate-800 bg-slate-900 p-8">
+    <div className="mx-auto max-w-lg rounded-[2rem] border border-white/10 bg-white/5 p-8 backdrop-blur-sm">
       <div className="mb-6 flex gap-2 rounded-2xl bg-slate-950 p-1">
         {['login', 'register'].map((value) => (
           <button
             key={value}
             onClick={() => setMode(value)}
-            className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold ${mode === value ? 'bg-cyan-500 text-slate-950' : 'text-slate-400'}`}
+            className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold ${mode === value ? 'bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950' : 'text-slate-400'}`}
           >
             {value === 'login' ? 'Login' : 'Register'}
           </button>
@@ -53,7 +53,7 @@ export default function AuthPage() {
         <input placeholder="Email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
         <input placeholder="Password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         {error && <p className="text-sm text-rose-400">{error}</p>}
-        <button className="w-full rounded-2xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950">{mode === 'login' ? 'Sign in' : 'Create account'}</button>
+        <button className="w-full rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-semibold text-slate-950">{mode === 'login' ? 'Sign in' : 'Create account'}</button>
       </form>
     </div>
   );

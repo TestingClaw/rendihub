@@ -1,8 +1,9 @@
 import { validationResult } from 'express-validator';
 import { pool } from '../config/db.js';
 import { comparePassword, hashPassword, signToken } from '../utils/auth.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-export const register = async (req, res) => {
+export const register = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
@@ -33,9 +34,9 @@ export const register = async (req, res) => {
       location: user.location
     }
   });
-};
+});
 
-export const login = async (req, res) => {
+export const login = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
@@ -58,9 +59,9 @@ export const login = async (req, res) => {
       location: user.location
     }
   });
-};
+});
 
-export const me = async (req, res) => {
+export const me = asyncHandler(async (req, res) => {
   const [users] = await pool.query('SELECT id, full_name, email, location FROM users WHERE id = ?', [req.user.id]);
   const user = users[0];
 
@@ -72,4 +73,4 @@ export const me = async (req, res) => {
       location: user.location
     }
   });
-};
+});

@@ -1,6 +1,6 @@
 export default function SearchFilters({ filters, setFilters, categories, onSearch }) {
   return (
-    <div className="grid gap-4 rounded-3xl border border-slate-800 bg-slate-900 p-5 md:grid-cols-5">
+    <div className="grid gap-4 rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm md:grid-cols-5">
       <input
         placeholder="Search items"
         value={filters.query}
@@ -29,7 +29,7 @@ export default function SearchFilters({ filters, setFilters, categories, onSearc
           onChange={(e) => setFilters((prev) => ({ ...prev, maxPrice: e.target.value }))}
         />
       </div>
-      <button onClick={onSearch} className="rounded-xl bg-cyan-500 px-4 py-3 font-semibold text-slate-950">Search</button>
+      <button onClick={onSearch} className="rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/25">Search</button>
     </div>
   );
 }

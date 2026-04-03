@@ -1,7 +1,8 @@
 import { validationResult } from 'express-validator';
 import { pool } from '../config/db.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
-export const createReview = async (req, res) => {
+export const createReview = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
@@ -31,4 +32,4 @@ export const createReview = async (req, res) => {
   );
 
   res.status(201).json({ message: 'Review submitted' });
-};
+});

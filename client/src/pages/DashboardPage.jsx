@@ -28,17 +28,17 @@ export default function DashboardPage() {
       <section>
         <h1 className="mb-4 text-3xl font-bold text-white">Dashboard</h1>
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5"><p className="text-slate-400">Marketplace items</p><p className="mt-2 text-3xl font-bold">{listings.length}</p></div>
-          <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5"><p className="text-slate-400">My bookings</p><p className="mt-2 text-3xl font-bold">{bookings.length}</p></div>
-          <div className="rounded-3xl border border-slate-800 bg-slate-900 p-5"><p className="text-slate-400">Pending approvals</p><p className="mt-2 text-3xl font-bold">{bookings.filter((booking) => booking.status === 'pending').length}</p></div>
+          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><p className="text-slate-400">Marketplace items</p><p className="mt-2 text-3xl font-bold text-white">{listings.length}</p></div>
+          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><p className="text-slate-400">My bookings</p><p className="mt-2 text-3xl font-bold text-white">{bookings.length}</p></div>
+          <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5 backdrop-blur-sm"><p className="text-slate-400">Pending approvals</p><p className="mt-2 text-3xl font-bold text-white">{bookings.filter((booking) => booking.status === 'pending').length}</p></div>
         </div>
       </section>
 
-      <section className="rounded-3xl border border-slate-800 bg-slate-900 p-6">
+      <section className="rounded-[2rem] border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
         <h2 className="mb-4 text-xl font-semibold text-white">Bookings</h2>
         <div className="space-y-4">
           {bookings.map((booking) => (
-            <div key={booking.id} className="rounded-2xl border border-slate-800 bg-slate-950 p-4">
+            <div key={booking.id} className="rounded-2xl border border-white/10 bg-slate-950 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold text-white">{booking.title}</p>

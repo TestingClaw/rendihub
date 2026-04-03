@@ -1,5 +1,6 @@
 import { validationResult } from 'express-validator';
 import { pool } from '../config/db.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 const mapListing = (row) => ({
   id: row.id,
@@ -24,12 +25,12 @@ const mapListing = (row) => ({
   images: row.images ? row.images.split(',') : []
 });
 
-export const getCategories = async (_req, res) => {
+export const getCategories = asyncHandler(async (_req, res) => {
   const [categories] = await pool.query('SELECT * FROM categories ORDER BY name');
   res.json({ categories });
-};
+});
 
-export const createListing = async (req, res) => {
+export const createListing = asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     return res.status(422).json({ errors: errors.array() });
@@ -55,13 +56,13 @@ export const createListing = async (req, res) => {
     res.status(201).json({ message: 'Listing created', listingId: result.insertId });
   } catch (error) {
     await connection.rollback();
-    res.status(500).json({ message: 'Failed to create listing', error: error.message });
+    throw error;
   } finally {
     connection.release();
   }
-};
+});
 
-export const getListings = async (req, res) => {
+export const getListings = asyncHandler(async (req, res) => {
   const { category, location, minPrice, maxPrice, query } = req.query;
   const conditions = [];
   const params = [];
@@ -105,9 +106,9 @@ export const getListings = async (req, res) => {
   );
 
   res.json({ listings: rows.map(mapListing) });
-};
+});
 
-export const getListingById = async (req, res) => {
+export const getListingById = asyncHandler(async (req, res) => {
   const [rows] = await pool.query(
     `SELECT l.*, c.name AS category_name, u.full_name AS owner_name, u.location AS owner_location,
             AVG(r.rating) AS avg_rating, COUNT(DISTINCT r.id) AS review_count,
@@ -145,4 +146,4 @@ export const getListingById = async (req, res) => {
     bookings,
     reviews
   });
-};
+});
